@@ -1,42 +1,94 @@
 # zsh-copilot
 
-
 Get suggestions **truly** in your shell. No `suggest` bullshit. Just press `CTRL + Z` and get your suggestion.
 
-https://github.com/Myzel394/zsh-copilot/assets/50424412/ed2bc8ac-ce49-4012-ab73-53cf6f3151a2
+![Demo](out.mp4)
 
 ## Installation
 
 ### Dependencies
 
 Please make sure you have the following dependencies installed:
+* zsh-autosuggestions
+* jq
+* curl
+* Docker (for running Ollama in a container)
 
-* [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions)
-* [jq](https://github.com/jqlang/jq)
-* [curl](https://github.com/curl/curl)
+### Plugin Installation
 
-```sh
-git clone https://github.com/Myzel394/zsh-copilot.git ~/.zsh-copilot
+```bash
+git clone https://github.com/YourUsername/zsh-copilot.git ~/.zsh-copilot
 echo "source ~/.zsh-copilot/zsh-copilot.plugin.zsh" >> ~/.zshrc
 ```
 
-### Configuration
+### Ollama Setup with Docker
 
-You need to have an OPENAI API key with access to `gpt-4` to use this plugin. Expose this via the `OPENAI_API_KEY` environment variable:
+This version of zsh-copilot uses Ollama, which should be run in a Docker container. Here's how to set it up:
 
-```sh
-export OPENAI_API_KEY=<your-api-key>
+1. Pull the Ollama Docker image:
+   ```bash
+   docker pull ollama/ollama
+   ```
+
+2. Run the Ollama container:
+   ```bash
+   docker run -d --name ollama -p 11434:11434 -v ollama:/root/.ollama ollama/ollama
+   ```
+
+3. Pull the llama3 model (or any other model you want to use):
+   ```bash
+   docker exec -it ollama ollama pull llama3
+   ```
+
+## Configuration
+
+By default, the plugin will use the "llama3" model with Ollama. You can configure the following environment variables in your `~/.zshrc`:
+
+```bash
+export ZSH_COPILOT_OLLAMA_URL="http://localhost:11434"  # Ollama API URL
+export ZSH_COPILOT_OLLAMA_MODEL="llama3"  # Ollama model to use
+export ZSH_COPILOT_KEY="^z"  # Key to trigger suggestions (default: CTRL+Z)
+export ZSH_COPILOT_SEND_CONTEXT=true  # Whether to send context information to the model
+export ZSH_COPILOT_DEBUG=false  # Enable debug mode
 ```
 
-I tried out using `gpt-3` but the results were garbage.
+If you're running Ollama on a different machine or port, adjust the `ZSH_COPILOT_OLLAMA_URL` accordingly.
 
 To see available configurations, run:
 
-```sh
+```bash
 zsh-copilot --help
 ```
 
 ## Usage
 
-Type in your command or your message and press `CTRL + Z` to get your suggestion!
+Type in your command or your message and press `CTRL + Z` (or your configured key) to get your suggestion!
 
+## Differences from Original Version
+
+This fork uses Ollama instead of the OpenAI API, which means:
+- No API key is required
+- You can use it with locally running models in a Docker container
+- You have more control over the model and can easily switch between different models
+
+## Troubleshooting
+
+If you encounter any issues:
+
+1. Make sure the Ollama Docker container is running:
+   ```bash
+   docker ps | grep ollama
+   ```
+   If it's not running, start it with:
+   ```bash
+   docker start ollama
+   ```
+
+2. Check that the Ollama API URL is correct (default is http://localhost:11434)
+3. Verify that the model you're trying to use is available in your Ollama container:
+   ```bash
+   docker exec -it ollama ollama list
+   ```
+4. Enable debug mode by setting `export ZSH_COPILOT_DEBUG=true` and check the log file at `/tmp/zsh-copilot.log`
+
+If problems persist, please open an issue on the GitHub repository.
